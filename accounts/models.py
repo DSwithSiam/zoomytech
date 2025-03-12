@@ -12,6 +12,7 @@ class CustomUserManager(UserManager):
         user.save(using=self._db)
         return user
 
+
 class CustomUser(AbstractUser):
     username = models.CharField(max_length=150, blank=True, null=True) 
     full_name = models.CharField(max_length=50, blank=True, null=True, default="")
@@ -30,3 +31,21 @@ class CustomUser(AbstractUser):
 
     # EMAIL_FIELD = "email" 
     objects = CustomUserManager()
+
+
+
+class CompanyDetails(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='company_details')
+    logo = models.ImageField(upload_to='logo/', blank=True, null=True)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    email = models.EmailField(max_length=100, blank=True, null=True)   
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    website = models.URLField(max_length=100, blank=True, null=True)   
+    street = models.CharField(max_length=100, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    zipcode = models.CharField(max_length=50, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+
+    def __str__(self):
+        return self.name if self.name else "Company Details"
+

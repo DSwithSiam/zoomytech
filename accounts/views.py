@@ -11,7 +11,7 @@ from rest_framework import status
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from rest_framework_simplejwt.tokens import RefreshToken
-from accounts.serializers import CustomUserSerializer
+from .serializers import CompanyDetailsSerializers, CustomUserSerializer
 from .models import *
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
@@ -51,6 +51,7 @@ def signup(request):
             user.otp = otp_string
             user.save()
 
+            company_details = CompanyDetails.objects.create(user = request.user)
             
             return Response({"email": user.email, "message" : 'A confirmation email has been sent to your inbox.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -259,4 +260,33 @@ def delete_user(request):
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
+
+@api_view(['POST', 'PUT'])
+@permission_classes([IsAuthenticated])
+def create_or_update_company_details(request):
+    user = request.user
+    
+    if request.method == 'POST':
+        try:
+            serializer = CompanyDetailsSerializers(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user=user)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+    elif request.method == 'PUT':
+        try:
+            company_instance = CompanyDetails.objects.get(user = request.user)
+            serializer = CompanyDetailsSerializers(company_instance, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
