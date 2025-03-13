@@ -1,5 +1,6 @@
 import datetime
 from datetime import datetime, timedelta
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
@@ -8,6 +9,9 @@ from .models import *
 from .serializers import *
 from .ai import generate_cover_letter_and_proposal
 import requests
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import textwrap
 
 
 API_KEY = "9YcWOXkbXKd0cg6ExffTxiLEjgp3h1ZiHQIYdNej"
@@ -15,7 +19,7 @@ API_KEY = "9YcWOXkbXKd0cg6ExffTxiLEjgp3h1ZiHQIYdNej"
 
 
 
-def get_contracts_details(NoticeID, all_data = False):
+def get_contracts_details(NoticeID):
     BASE_URL = "https://api.sam.gov/opportunities/v2/search"
 
     today = datetime.today()
@@ -39,25 +43,7 @@ def get_contracts_details(NoticeID, all_data = False):
         
         for contract in data.get("opportunitiesData", []):
             if contract.get("noticeId") == NoticeID:
-                if all_data:
-                    return contract
-
-                primary_contact = contract.get("pointOfContact", [{}])[0] 
-                
-                return {
-                    "noticeId": contract.get("noticeId", 0),
-                    "title": contract.get("title", 0),
-                    "solicitationNumber": contract.get("solicitationNumber", 0),
-                    "fullParentPathName": contract.get("fullParentPathName", 0),
-                    "type": contract.get("type", 0),
-                    "archiveDate": contract.get("archiveDate", 0),
-                    "responseDeadLine": contract.get("responseDeadLine", 0),
-                    "active": contract.get("active", 0),
-                    "contact_email": primary_contact.get("email", None),
-                    "contact_phone": primary_contact.get("phone", None),
-                    "contact_fullName": primary_contact.get("fullName", None),
-                }
-    
+                return contract
     return None  
 
 
@@ -117,8 +103,7 @@ def fetch_contract_details(notice_id):
     else:
         return f"❌ Error fetching contract {notice_id}: {response.status_code}"
 
-
-#----------------
+#                   ----------------
 
 
 @api_view(['POST'])
@@ -128,7 +113,6 @@ def recent_contracts_list(request):
     
     if not keyword:
         keyword = ""
-
     response = get_contracts_list(keyword)
 
     if response.status_code == 2000:
@@ -156,27 +140,48 @@ def contracts_details(request):
     if request.method == "POST":
         NOTICE_ID = request.data.get("notic_id")
 
-        details = get_contracts_details(NOTICE_ID)
-        data = get_contracts_description(NOTICE_ID)
+        contract = get_contracts_details(NOTICE_ID)
+        description = get_contracts_description(NOTICE_ID)
 
-        if data != "400":
-            data['noticeId'] = details["noticeId"]
-            data["title"] = details["title"]
-            data["solicitationNumber"] = details["solicitationNumber"]
-            data["fullParentPathName"] = details["fullParentPathName"]
-            data["type"] = details["type"]
-            data["archiveDate"] = details["archiveDate"]
-            data["responseDeadLine"] = details["responseDeadLine"]
-            data["active"] = details["active"]
-            data["contact_email"] = details["contact_email"]
-            data["contact_phone"] = details["contact_phone"]
-            data["contact_fullName"] = details["contact_fullName"]
-
-            return Response(data, status=status.HTTP_200_OK)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        details = ContractDetails.objects.create(contract = contract, description = description)
+        details.save()
+        
+        primary_contact = contract.get("pointOfContact", [{}])[0] 
+        data =  {
+            "noticeId": contract.get("noticeId", 0),
+            "title": contract.get("title", 0),
+            "solicitationNumber": contract.get("solicitationNumber", 0),
+            "fullParentPathName": contract.get("fullParentPathName", 0),
+            "type": contract.get("type", 0),
+            "archiveDate": contract.get("archiveDate", 0),
+            "responseDeadLine": contract.get("responseDeadLine", 0),
+            "active": contract.get("active", 0),
+            "contact_email": primary_contact.get("email", None),
+            "contact_phone": primary_contact.get("phone", None),
+            "contact_fullName": primary_contact.get("fullName", None),
+            "description" : description,
+        }
+        return Response(data, status=status.HTTP_200_OK)
+      
         
 
+
+
+@api_view(["POST"])
+def requirements_analysis(request):
+    if request.method == "POST":
+        try:
+            notice_id = request.data.get('notice_id')
+            contact_details = ContractDetails.objects.get(notice_id = notice_id)
+            contact_details = contact_details.contract
+            description = contact_details.description
+            
+            #ai function requirements_analysis
+
+            return Response({'requirements': ""}, status=status.HTTP_200_OK)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
 
 
 @api_view(["POST"])
@@ -184,28 +189,24 @@ def generate_proposal(request):
     if request.method == "POST":
         try:
             notice_id = request.data.get('notice_id')
-            notice_details = get_contracts_details(NoticeID = notice_id , all_data = True)
-            description = get_contracts_description(notice_id)
+            contact_details = ContractDetails.objects.get(notice_id = notice_id)
+            contact_details = contact_details.contract
+            description = contact_details.description
             company_details = CompanyDetails.objects.get(user = request.user)
-
-            
-            proposal = generate_cover_letter_and_proposal(description, notice_details)
-
+            proposal = generate_cover_letter_and_proposal(description, contact_details)  #ai function
             proposal_object = ContractProposal.objects.create(
                 user = request.user,
                 notice_id = notice_id,
-                solicitation_number =  notice_details["solicitationNumber"],
-                opportunity_type =  notice_details["type"],
-                inactive_date = notice_details["archiveDate"],
+                solicitation_number =  contact_details["solicitationNumber"],
+                opportunity_type =  contact_details["type"],
+                inactive_date = contact_details["archiveDate"],
                 draft = False,
                 proposal = proposal
             )
             proposal_object.save()
-
             return Response({'proposal': proposal}, status=status.HTTP_200_OK)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(["GET"])
@@ -217,7 +218,6 @@ def draf_proposal_list(request):
             return Response(serializers.data, status=status.HTTP_200_OK)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(["GET"])
@@ -233,11 +233,9 @@ def submit_proposal_list(request):
 
 @api_view(["PUT"])
 def get_and_update_proposal_by_id(request):
-        
     if request.method == "GET":
         try:
-            proposal_id = request.data.get('proposal_id')
-            
+            proposal_id = request.data.get('proposal_id')   
             proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
             proposal_object.save()
 
@@ -263,4 +261,39 @@ def get_and_update_proposal_by_id(request):
 @api_view(['POST'])
 @permission_classes([])
 def apply_by_email(request):
-    pass
+    if request.method == "POST":
+        pass
+
+
+
+def generate_pdf(request):
+    if request.method == "POST":
+        text = request.data.get('text', None)
+        
+        if not text:
+            return Response({"error": "No text provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create PDF response
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="generated_text.pdf"'
+
+        # Create a canvas object to generate the PDF
+        pdf = canvas.Canvas(response, pagesize=letter)
+        width, height = letter
+        margin = 50
+        y_position = height - margin  # Start from top
+        line_height = 15  # Space between lines
+        max_width = width - (2 * margin)  # Usable width for text wrapping
+
+        # Wrap text and draw it to the PDF
+        for line in text.split("\n"):
+            wrapped_lines = textwrap.wrap(line, width=100)  # Wrap text to fit page
+            for wrapped_line in wrapped_lines:
+                pdf.drawString(margin, y_position, wrapped_line)
+                y_position -= line_height
+                if y_position < margin:  # If reaching bottom, create a new page
+                    pdf.showPage()
+                    y_position = height - margin
+
+        pdf.save()
+        return response

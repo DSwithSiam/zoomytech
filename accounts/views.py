@@ -262,13 +262,13 @@ def delete_user(request):
 
 
 
-
-@api_view(['POST', 'PUT'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def create_or_update_company_details(request):
+def update_company_details(request):
     user = request.user
+    company_instance = CompanyDetails.objects.filter(user = request.user).exists()
     
-    if request.method == 'POST':
+    if not company_instance:
         try:
             serializer = CompanyDetailsSerializers(data=request.data)
             if serializer.is_valid():
@@ -278,8 +278,7 @@ def create_or_update_company_details(request):
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-
-    elif request.method == 'PUT':
+    if company_instance:
         try:
             company_instance = CompanyDetails.objects.get(user = request.user)
             serializer = CompanyDetailsSerializers(company_instance, data=request.data, partial=True)
@@ -287,6 +286,23 @@ def create_or_update_company_details(request):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_company_details(request):
+    user = request.user
+    
+    if request.method == 'GET':
+        try:
+            company_instance = CompanyDetails.objects.get(user=request.user)
+            serializer = CompanyDetailsSerializers(company_instance)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CompanyDetails.DoesNotExist:
+            return Response({'detail': 'Company details not found.'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
