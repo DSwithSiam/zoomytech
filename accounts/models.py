@@ -32,7 +32,6 @@ class CustomUser(AbstractUser):
     objects = CustomUserManager()
 
 
-
 class CompanyDetails(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='company_details')
     logo = models.ImageField(upload_to='logo/', blank=True, null=True)

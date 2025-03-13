@@ -146,6 +146,8 @@ EMAIL_HOST_USER = "masipulislam@gmail.com"
 EMAIL_HOST_PASSWORD = "kqdq vmoq htqe dxqe" 
 
 
+# BASE_URL = 'http://yourdomain.com/media'
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -175,3 +177,7 @@ SWAGGER_SETTINGS = {
     }
 }
 
+
+
+
+API_KEY = "9YcWOXkbXKd0cg6ExffTxiLEjgp3h1ZiHQIYdNej"
