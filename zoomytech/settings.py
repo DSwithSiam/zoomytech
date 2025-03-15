@@ -166,7 +166,6 @@ SIMPLE_JWT = {
 }
 
 
-
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {
@@ -180,4 +179,4 @@ SWAGGER_SETTINGS = {
 
 
 
-API_KEY = "9YcWOXkbXKd0cg6ExffTxiLEjgp3h1ZiHQIYdNej"
+SAM_API_KEY = "9YcWOXkbXKd0cg6ExffTxiLEjgp3h1ZiHQIYdNej"
