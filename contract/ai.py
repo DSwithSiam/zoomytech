@@ -4,36 +4,56 @@ from datetime import datetime
 api_key = "AIzaSyB01ouUyKFz7IGzCgEnBdHnEY9QRQXPfIQ"  
 genai.configure(api_key=api_key)
     
-# notice_details_ = {
-#     'noticeId': 'fcaf4a7bdb5c4550b374b7aa66089a2b',
-#     'title': 'SU/MH/SOT in Memphis, TN',
-#     'solicitationNumber': '15BCTS24Q00000007',
-#     'fullParentPathName': 'JUSTICE, DEPARTMENT OF.FEDERAL PRISON SYSTEM / BUREAU OF PRISONS.COMMUNITY TREATMENT SERVICES - CO',
-#     'postedDate': '2024-04-05',
-#     'type': 'Presolicitation',
-#     'typeOfSetAsideDescription': 'Total Small Business Set-Aside (FAR 19.5)',
-#     'responseDeadLine': '2024-04-19T12:00:00-04:00',
-#     'naicsCode': '621420',
-#     'classificationCode': 'G004',
-#     'pointOfContact': [
-#         {
-#             'email': 'k1warner@bop.gov',
-#             'phone': '2025986139',
-#             'fullName': 'Kia Warner'
+# {
+#         "noticeId": "fcfd50c27639416bb40825e8a410da8c",
+#         "title": "30--WEIGHT,COUNTERBALAN",
+#         "solicitationNumber": "SPE7M125T8227",
+#         "fullParentPathName": "DEPT OF DEFENSE.DEFENSE LOGISTICS AGENCY.DLA MARITIME.DLA MARITIME COLUMBUS.DLA LAND AND MARITIME",
+#         "fullParentPathCode": "097.97AS.DLA MARITIME.DLA MARITIME COLUMBS.SPE7M1",
+#         "postedDate": "2025-03-16",
+#         "type": "Combined Synopsis/Solicitation",
+#         "baseType": "Combined Synopsis/Solicitation",
+#         "archiveType": "autocustom",
+#         "archiveDate": "2025-04-26",
+#         "typeOfSetAsideDescription": "Total Small Business Set-Aside (FAR 19.5)",
+#         "typeOfSetAside": "SBA",
+#         "responseDeadLine": "2025-03-27",
+#         "naicsCode": "333613",
+#         "naicsCodes": [
+#             "333613"
+#         ],
+#         "classificationCode": "30",
+#         "active": "Yes",
+#         "award": null,
+#         "pointOfContact": [
+#             {
+#                 "fax": null,
+#                 "type": "primary",
+#                 "email": "DibbsBSM@dla.mil",
+#                 "phone": null,
+#                 "title": null,
+#                 "fullName": "Questions regarding this solicitation should be emailed to the buyer listed in block 5 of the solicitation document which can be found under the Additional Information link.\nIf the Additional Information link does not work, please go to https://www.dibbs.bsm.dla.mil/Solicitations/ and type the solicitation number in the Global Search box.\n"
+#             }
+#         ],
+#         "description": "https://api.sam.gov/prod/opportunities/v1/noticedesc?noticeid=fcfd50c27639416bb40825e8a410da8c",
+#         "organizationType": "OFFICE",
+#         "officeAddress": {
+#             "zipcode": "43218-3990",
+#             "city": "COLUMBUS",
+#             "countryCode": "USA",
+#             "state": "OH"
 #         },
-#         {
-#             'email': 'r1carroll@bop.gov',
-#             'phone': '2025986124',
-#             'fullName': 'Robert Carroll'
-#         }
-#     ],
-#     'companyDetails': {
-#         'companyName': 'XYZ Healthcare Solutions',
-#         'address': '123 Business Ave, Suite 400, Memphis, TN 38001',
-#         'phone': '+1 800-555-0101',
-#         'email': 'contact@xyzhealthcare.com',
+#         "placeOfPerformance": null,
+#         "additionalInfoLink": null,
+#         "uiLink": "https://sam.gov/opp/fcfd50c27639416bb40825e8a410da8c/view",
+#         "links": [
+#             {
+#                 "rel": "self",
+#                 "href": "https://api.sam.gov/prod/opportunities/v2/search?noticeid=fcfd50c27639416bb40825e8a410da8c&limit=1"
+#             }
+#         ],
+#         "resourceLinks": null
 #     }
-# }
 
 # description_ = """
 # The Federal Bureau of Prisons, CTS Contracting Office, Washington, D.C. is seeking quotes from sources
@@ -67,13 +87,24 @@ def generate_cover_letter_and_proposal(description, notice_details):
     - NAICS Code: {notice_details['naicsCode']}
     - Classification Code: {notice_details['classificationCode']}
     - Response Deadline: {notice_details['responseDeadLine']}
+
     
-    Company Information:
-    - Company Name: {notice_details['companyDetails']['companyName']}
-    - Company Address: {notice_details['companyDetails']['address']}
-    - Contact Email: {notice_details['companyDetails']['email']}
-    - Contact Phone: {notice_details['companyDetails']['phone']}
+    Point Of Contact:
+    - Fax: {notice_details['pointOfContact'][0]['fax']}
+    - Type: {notice_details['pointOfContact'][0]['type']}
+    - Email: {notice_details['pointOfContact'][0]['email']}
+    - phone: {notice_details['pointOfContact'][0]['phone']}
+    - Title: {notice_details['pointOfContact'][0]['title']}
+    - Full Name: {notice_details['pointOfContact'][0]['fullName']}
     
+
+    office Address:
+    - Office Zipcode: {notice_details['officeAddress']['zipcode']}
+    - Office City: {notice_details['officeAddress']['city']}
+    - Office Country Code: {notice_details['officeAddress']['countryCode']}
+    - Office State: {notice_details['officeAddress']['state']}
+    
+
     The cover letter should include a professional introduction, statement of interest, and relevant qualifications.
     The contract proposal should clearly outline the scope of services, terms, pricing, and duration of the contract.
 
@@ -133,5 +164,5 @@ with services ending (if all options years are renewed) on September 30, 2029. T
 Option Year One, Option Year Two, Option Year Three, and Option Year Four.
 """
 
-recommendations = generate_recommendations_for_cover_letter_and_contract(description)
-print(recommendations)
+# recommendations = generate_recommendations_for_cover_letter_and_contract(description)
+# print(recommendations)

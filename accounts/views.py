@@ -50,10 +50,8 @@ def signup(request):
             
             user.otp = otp_string
             user.save()
-
-            company_details = CompanyDetails.objects.create(user = request.user)
-            
-            return Response({"email": user.email, "message" : 'A confirmation email has been sent to your inbox.'}, status=status.HTTP_201_CREATED)
+            company_details = CompanyDetails.objects.create(user = user)
+            return Response({"message" : 'A confirmation email has been sent to your inbox.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -167,7 +165,7 @@ def logout(request):
 
 
 
-@api_view(['GET', 'PUT'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def profile(request):  
     user = request.user  
@@ -182,6 +180,7 @@ def profile(request):
             'image': image_url,
             'full_name': user.full_name
         }, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])
@@ -238,10 +237,13 @@ def reset_password(request):
     user = request.user
     new_password = request.data.get('new_password')
     if user.is_active:
+        if user.check_password(new_password):
+            return Response({'detail': 'New password cannot be the same as the old password'}, status=status.HTTP_400_BAD_REQUEST)
+
         if new_password:
             user.set_password(new_password)
             user.save() 
-            return Response("Password reset successfully", status=status.HTTP_200_OK)
+            return Response({'detail': "Password reset successfully"}, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'Password cant be empty'}, status=status.HTTP_400_BAD_REQUEST)
     else:
@@ -267,7 +269,7 @@ def delete_user(request):
 def update_company_details(request):
     user = request.user
     company_instance = CompanyDetails.objects.filter(user = request.user).exists()
-    
+
     if not company_instance:
         try:
             serializer = CompanyDetailsSerializers(data=request.data)

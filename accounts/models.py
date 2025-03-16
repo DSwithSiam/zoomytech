@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+from stripe import Subscription
 
 
 class CustomUserManager(UserManager):
@@ -18,9 +19,7 @@ class CustomUser(AbstractUser):
     full_name = models.CharField(max_length=50, blank=True, null=True, default="")
     email = models.EmailField(unique=True)
     image = models.ImageField(upload_to='users_images/', blank=True, null=True)
-    subscription_plan = models.BooleanField(default=False)
-  
-    
+   
     otp = models.CharField(max_length=10, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)  

@@ -3,15 +3,16 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('recent-contracts/', recent_contracts_list, name='recent-contracts'),
-    path('contract-details/', contracts_details, name='contract-details'),
-    
+    path('recent/list/', recent_contracts_list, name='recent-contracts'),
+    path('details/', contracts_details, name='contract-details'),
+
     path('requirements-analysis/', requirements_analysis, name='requirements-analysis'),
     path('generate-proposal/', generate_proposal, name='generate-proposal'),
     path('draft-proposals/', draf_proposal_list, name='draft-proposals'),
     path('submitted-proposals/', submit_proposal_list, name='submitted-proposals'),
     path('proposal/', get_and_update_proposal_by_id, name='proposal'),
-    path('download-pdf/', download_pdf, name='download-pdf'),
-    path('send-pdf-email/', send_pdf_email, name='send-pdf-email'),
+    # path('download-pdf/', download_pdf, name='download-pdf'),
+    # path('send-pdf-email/', send_pdf_email, name='send-pdf-email'),
+    path('proposal_pdf/', proposal_pdf, name='proposal_pdf'),
 ]
 

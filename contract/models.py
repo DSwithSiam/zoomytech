@@ -12,9 +12,9 @@ class Testimonial(models.Model):
         return self.title or "Untitled Testimonial"
 
 class ContractDetails(models.Model):
-    notice_id = models.CharField(max_length = 300)
+    notice_id = models.CharField(max_length = 1000, null = True, blank = True)
     contract = models.JSONField(null = True, blank = True)
-    description = models.TextField()
+    description = models.TextField(null = True, blank = True)
     created_at = models.DateTimeField(auto_now_add = True)
 
 
@@ -27,14 +27,13 @@ class ContractProposal(models.Model):
     submit_email = models.CharField(max_length=100, null=True, blank=True)
     submit_full_name = models.CharField(max_length=100, null=True, blank=True)
     inactive_date = models.DateField(null=True, blank = True)
-    pdf_path = models.CharField(max_length=255, blank=True, null=True)
+    pdf_file = models.FileField(upload_to='contracts/', max_length=255, blank=True, null=True)  
     draft = models.BooleanField(default=False)
     submit = models.BooleanField(default=False) 
     proposal = models.TextField()
     created_at = models.DateTimeField(auto_now_add = True)
 
-    def __init__(self):
-        return f"{self.notice_id}"
+    
 
 
 
