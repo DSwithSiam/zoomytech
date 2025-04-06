@@ -296,8 +296,6 @@ def update_company_details(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_company_details(request):
-    user = request.user
-    
     if request.method == 'GET':
         try:
             company_instance = CompanyDetails.objects.get(user=request.user)

@@ -201,32 +201,36 @@ def requirements_analysis(request):
 @api_view(["POST"])
 def generate_proposal(request):
     if request.method == "POST":
-        # try:
-        notice_id = request.data.get('notice_id')
-        contact_details = ContractDetails.objects.get(notice_id = notice_id)
-        contact_details = contact_details.contract
-        description = contact_details["description"]
+        try:
+            notice_id = request.data.get('notice_id')
+            contact_details = ContractDetails.objects.get(notice_id = notice_id)
+            contact_details = contact_details.contract
+            description = contact_details["description"]
 
-        company_details = CompanyDetails.objects.get(user = request.user)
-        proposal = generate_cover_letter_and_proposal(description, contact_details)  #ai function
+            proposal = generate_cover_letter_and_proposal(description, contact_details)  #ai function
 
-        primary_contact = contact_details.get("pointOfContact", [{}])[0] 
-        proposal_object = ContractProposal.objects.create(
-            user = request.user,
-            notice_id = notice_id,
-            solicitation_number =  contact_details.get("solicitationNumber", None),
-            title = contact_details.get("title", None),
-            opportunity_type =  contact_details.get("type", None),
-            inactive_date = contact_details.get("archiveDate", None),
-            submit_email = primary_contact.get("email", None),
-            submit_full_name = primary_contact.get("fullName", None),
-            draft = False,
-            proposal = proposal,
-        )
-        proposal_object.save()
-        return Response({'proposal_id': proposal_object.id, 'proposal': proposal, 'notice_id': notice_id}, status=status.HTTP_200_OK)
-        # except:
-        #     return Response(status=status.HTTP_400_BAD_REQUEST)
+            primary_contact = contact_details.get("pointOfContact", [{}])[0] 
+            proposal_object = ContractProposal.objects.create(
+                user = request.user,
+                notice_id = notice_id,
+                solicitation_number =  contact_details.get("solicitationNumber", None),
+                title = contact_details.get("title", None),
+                opportunity_type =  contact_details.get("type", None),
+                inactive_date = contact_details.get("archiveDate", None),
+                submit_email = primary_contact.get("email", None),
+                submit_full_name = primary_contact.get("fullName", None),
+                draft = False,
+                proposal = proposal,
+            )
+            proposal_object.save()
+            return Response({'proposal_id': proposal_object.id, 'proposal': proposal, 'notice_id': notice_id}, status=status.HTTP_200_OK)
+        
+        except ContractDetails.DoesNotExist:
+            return Response({'message': 'Contract details not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except CompanyDetails.DoesNotExist:
+            return Response({'message': 'Company details not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
@@ -236,8 +240,11 @@ def draf_proposal_list(request):
             proposal_objects = ContractProposal.objects.filter(user = request.user, draft = True)
             serializers = ContractProposalSerializers(data = proposal_objects, many = True)
             return Response(serializers.data, status=status.HTTP_200_OK)
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        except ContractProposal.DoesNotExist:
+            return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -250,8 +257,11 @@ def get_and_update_proposal_by_id(request):
             proposal_object.save()
 
             return Response({'proposal': proposal_object.proposal}, status=status.HTTP_200_OK)
+        
         except ContractProposal.DoesNotExist:
             return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     if request.method == "PUT":
         try:
@@ -263,8 +273,11 @@ def get_and_update_proposal_by_id(request):
             proposal_object.save()
 
             return Response({'messages': "Proposal updated successfully"}, status=status.HTTP_200_OK)
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        except ContractProposal.DoesNotExist:
+            return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])
@@ -278,6 +291,8 @@ def submit_proposal_list(request):
         
         except ContractProposal.DoesNotExist:
             return Response({'messages': "Proposal does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def generate_and_save_pdf(text, notice_id, filename=None):
@@ -311,12 +326,12 @@ def generate_and_save_pdf(text, notice_id, filename=None):
 
 @api_view(['POST'])
 def proposal_pdf(request):
-    proposal_id = request.data.get('proposal_id')
-    
-    if not proposal_id:
-        return Response({'message': 'Proposal ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
+        proposal_id = request.data.get('proposal_id')
+        
+        if not proposal_id:
+            return Response({'message': 'Proposal ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
         contract_proposal = ContractProposal.objects.get(id=proposal_id)
 
         proposal_text = contract_proposal.proposal  
@@ -327,7 +342,6 @@ def proposal_pdf(request):
     except ContractProposal.DoesNotExist:
         return Response({'message': 'Proposal does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        print(f"Error: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
