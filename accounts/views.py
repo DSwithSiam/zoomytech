@@ -223,19 +223,25 @@ def reset_request_activate(request):
         if OTP == user.otp:
             user.otp = None
             user.save()
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-            return Response({ "detail" : "OTP Activated", "refresh": str(refresh), "access_token": access_token}, status=status.HTTP_200_OK)
+            return Response({ "detail" : "OTP Activated"}, status=status.HTTP_200_OK)
         return Response("Please Try Again", status=status.HTTP_400_BAD_REQUEST)
 
 
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
 def reset_password(request):
-    user = request.user
+    email = request.data.get('email')
     new_password = request.data.get('new_password')
+
+    user = CustomUser.objects.get(email=email)
+
+    if not email and not new_password:
+        return Response({"detail": "Email and new password are required."}, status=status.HTTP_400_BAD_REQUEST)
+    if not user:
+        return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        
     if user.is_active:
         if user.check_password(new_password):
             return Response({'detail': 'New password cannot be the same as the old password'}, status=status.HTTP_400_BAD_REQUEST)

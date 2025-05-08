@@ -5,7 +5,7 @@ from .models import *
 
 class ContractProposalSerializers(serializers.ModelSerializer):
     class Meta:
-        models = ContractProposal
+        model = ContractProposal
         fields = '__all__'
 
 

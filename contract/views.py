@@ -125,7 +125,7 @@ def recent_contracts_list(request):
             "Response Deadline": contract.get("responseDeadLine", "N/A"),
             })
             
-        return Response(data.get("opportunitiesData", []), status=status.HTTP_200_OK)
+        return Response(data, status=status.HTTP_200_OK)
     return Response(response.text, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -203,6 +203,7 @@ def generate_proposal(request):
     if request.method == "POST":
         try:
             notice_id = request.data.get('notice_id')
+
             contact_details = ContractDetails.objects.get(notice_id = notice_id)
             contact_details = contact_details.contract
             description = contact_details["description"]
@@ -233,13 +234,53 @@ def generate_proposal(request):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+
+@api_view(["POST"])
+def save_draft_proposal(request):
+    if request.method == "POST":
+        try:
+            proposal_id = request.data.get('proposal_id')
+            
+            proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
+            proposal_object.draft = True
+            proposal_object.save()
+
+            return Response({'messages': "Draft saved successfully"}, status=status.HTTP_200_OK)
+        
+        except ContractProposal.DoesNotExist:
+            return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["DELETE"])
+def delete_draft_proposal(request):
+    if request.method == "DELETE":
+        try:
+            proposal_id = request.data.get('proposal_id')
+            
+            proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
+            proposal_object.delete()
+
+            return Response({'messages': "Draft deleted successfully"}, status=status.HTTP_200_OK)
+        
+        except ContractProposal.DoesNotExist:
+            return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(["GET"])
 def draf_proposal_list(request):
     if request.method == "GET":
         try:
             proposal_objects = ContractProposal.objects.filter(user = request.user, draft = True)
-            serializers = ContractProposalSerializers(data = proposal_objects, many = True)
+            serializers = ContractProposalSerializers(proposal_objects, many = True)
+            print(serializers.data, "-------------------")
+            
             return Response(serializers.data, status=status.HTTP_200_OK)
+           
         
         except ContractProposal.DoesNotExist:
             return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
