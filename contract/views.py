@@ -426,26 +426,26 @@ def generate_and_save_pdf(text, proposal_id, filename=None):
 
 @api_view(['GET'])
 def proposal_pdf(request, proposal_id):
-    # try:        
-    if not proposal_id:
-        return Response({'message': 'Proposal ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    try:        
+        if not proposal_id:
+            return Response({'message': 'Proposal ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    contract_proposal = ContractProposal.objects.get(id=proposal_id)
-    proposal_text = contract_proposal.proposal  
+        contract_proposal = ContractProposal.objects.get(id=proposal_id)
+        proposal_text = contract_proposal.proposal  
+        
+        if contract_proposal.pdf_file:
+            pdf_url = settings.BASE_URL + contract_proposal.pdf_file.url
+            return Response({'pdf': pdf_url}, status=status.HTTP_200_OK)
     
-    # if contract_proposal.pdf_file:
-    #     pdf_url = settings.BASE_URL + contract_proposal.pdf_file.url
-    #     return Response({'pdf': pdf_url}, status=status.HTTP_200_OK)
-   
-    pdf_url = generate_and_save_pdf(text=proposal_text, proposal_id=proposal_id)
-    pdf_url = settings.BASE_URL + pdf_url
-    
-    return Response({'pdf': pdf_url}, status=status.HTTP_200_OK)
+        pdf_url = generate_and_save_pdf(text=proposal_text, proposal_id=proposal_id)
+        pdf_url = settings.BASE_URL + pdf_url
+        
+        return Response({'pdf': pdf_url}, status=status.HTTP_200_OK)
 
-    # except ContractProposal.DoesNotExist:
-    #     return Response({'message': 'Proposal does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-    # except Exception as e:
-    #     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except ContractProposal.DoesNotExist:
+        return Response({'message': 'Proposal does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
