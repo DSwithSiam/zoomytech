@@ -15,6 +15,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.core.files.base import ContentFile
 
+
 API_KEY = settings.SAM_API_KEY
 
 
@@ -290,10 +291,9 @@ def draf_proposal_list(request):
 
 
 @api_view(["PUT", 'GET'])
-def get_and_update_proposal_by_id(request):
+def get_and_update_proposal_by_id(request, proposal_id):
     if request.method == "GET":
         try:
-            proposal_id = request.data.get('proposal_id')   
             proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
             proposal_object.save()
 
@@ -306,7 +306,6 @@ def get_and_update_proposal_by_id(request):
     
     if request.method == "PUT":
         try:
-            proposal_id = request.data.get('proposal_id')
             proposal = request.data.get('update_proposal')
             
             proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
@@ -336,54 +335,117 @@ def submit_proposal_list(request):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def generate_and_save_pdf(text, notice_id, filename=None):
-    pdf_buffer = ContentFile(b'')
 
+
+from io import BytesIO
+from django.core.files.base import ContentFile
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.pdfbase.pdfmetrics import stringWidth
+
+def generate_and_save_pdf(text, proposal_id, filename=None):
+    pdf_buffer = BytesIO()
     c = canvas.Canvas(pdf_buffer, pagesize=letter)
 
-    c.setFont("Helvetica", 12)
-    x = 72
-    y = 750
+    width, height = letter
+    margin = inch
+    x = margin
+    y = height - margin
+
+    default_font = "Helvetica"
+    bold_font = "Helvetica-Bold"
+    font_size = 11
+
+    max_width = width - 2 * margin
+
+    def draw_line_with_bold_tags(line, x, y):
+        text_obj = c.beginText(x, y)
+        text_obj.setFont(default_font, font_size)
+
+        parts = line.split("**")
+        bold = False
+
+        for part in parts:
+            if bold:
+                text_obj.setFont(bold_font, font_size)
+            else:
+                text_obj.setFont(default_font, font_size)
+            text_obj.textOut(part)
+            bold = not bold
+
+        c.drawText(text_obj)
 
     for line in text.splitlines():
-        c.drawString(x, y, line)
-        y -= 14
-        if y < 72:
+        stripped_line = line.strip()
+
+        # Heading (## Title)
+        if stripped_line.startswith("##"):
+            heading = stripped_line.lstrip("#").strip()
+            c.setFont(bold_font, 14)
+            c.drawString(x, y, heading)
+            y -= 20
+
+        else:
+            # Word wrap manually
+            words = stripped_line.split()
+            current_line = ""
+            for word in words:
+                test_line = current_line + " " + word if current_line else word
+                line_width = stringWidth(test_line, default_font, font_size)
+                if line_width <= max_width:
+                    current_line = test_line
+                else:
+                    draw_line_with_bold_tags(current_line, x, y)
+                    y -= 14
+                    current_line = word
+                    if y < margin:
+                        c.showPage()
+                        y = height - margin
+
+            if current_line:
+                draw_line_with_bold_tags(current_line, x, y)
+                y -= 14
+
+        if y < margin:
             c.showPage()
-            y = 750
+            y = height - margin
 
     c.save()
-
-    contract_proposal = ContractProposal.objects.get(notice_id=notice_id)
     pdf_buffer.seek(0)
 
+    contract_proposal = ContractProposal.objects.get(id=proposal_id)
     if filename is None:
-        filename = f"proposal_{notice_id}.pdf"
+        filename = f"proposal_{proposal_id}.pdf"
 
-    contract_proposal.pdf_file.save(filename, pdf_buffer)
+    contract_proposal.pdf_file.save(filename, ContentFile(pdf_buffer.read()))
+    return contract_proposal.pdf_file.url
 
-    return contract_proposal.pdf_file.url  
 
 
-@api_view(['POST'])
-def proposal_pdf(request):
-    try:
-        proposal_id = request.data.get('proposal_id')
-        
-        if not proposal_id:
-            return Response({'message': 'Proposal ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        contract_proposal = ContractProposal.objects.get(id=proposal_id)
+@api_view(['GET'])
+def proposal_pdf(request, proposal_id):
+    # try:        
+    if not proposal_id:
+        return Response({'message': 'Proposal ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        proposal_text = contract_proposal.proposal  
-        pdf_url = generate_and_save_pdf(text=proposal_text, notice_id=contract_proposal.notice_id)
-        pdf_url = settings.BASE_URL + pdf_url
-        return Response({'pdf': pdf_url}, status=status.HTTP_200_OK)
+    contract_proposal = ContractProposal.objects.get(id=proposal_id)
+    proposal_text = contract_proposal.proposal  
+    
+    # if contract_proposal.pdf_file:
+    #     pdf_url = settings.BASE_URL + contract_proposal.pdf_file.url
+    #     return Response({'pdf': pdf_url}, status=status.HTTP_200_OK)
+   
+    pdf_url = generate_and_save_pdf(text=proposal_text, proposal_id=proposal_id)
+    pdf_url = settings.BASE_URL + pdf_url
+    
+    return Response({'pdf': pdf_url}, status=status.HTTP_200_OK)
 
-    except ContractProposal.DoesNotExist:
-        return Response({'message': 'Proposal does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # except ContractProposal.DoesNotExist:
+    #     return Response({'message': 'Proposal does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+    # except Exception as e:
+    #     return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
