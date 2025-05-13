@@ -268,7 +268,7 @@ def generate_proposal(request):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-        
+
 
 @api_view(["POST"])
 def save_draft_proposal(request):
@@ -279,6 +279,7 @@ def save_draft_proposal(request):
             proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
             proposal_object.draft = True
             proposal_object.save()
+            print(proposal_id, "-------------------")
 
             return Response({'messages': "Draft saved successfully"}, status=status.HTTP_200_OK)
         
@@ -289,12 +290,11 @@ def save_draft_proposal(request):
 
 
 @api_view(["DELETE"])
-def delete_draft_proposal(request):
+def delete_draft_proposal(request, proposal_id):
     if request.method == "DELETE":
         try:
-            proposal_id = request.data.get('proposal_id')
             
-            proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
+            proposal_object = ContractProposal.objects.get(id=proposal_id, user=request.user)
             proposal_object.delete()
 
             return Response({'messages': "Draft deleted successfully"}, status=status.HTTP_200_OK)
@@ -303,6 +303,7 @@ def delete_draft_proposal(request):
             return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 @api_view(["GET"])
@@ -324,10 +325,9 @@ def draf_proposal_list(request):
 
 
 @api_view(['GET'])
-def get_proposal_by_id(request):
+def get_proposal_by_id(request, proposal_id):
     if request.method == "GET":
         try:
-            proposal_id = request.query_params.get('proposal_id')
             proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
             proposal_object.save()
 
@@ -341,18 +341,17 @@ def get_proposal_by_id(request):
 
 
 @api_view(['PUT'])
-@permission_classes([])
 def update_proposal_by_id(request):
     if request.method == "PUT":
         try:
             proposal_id = request.data.get('proposal_id')
             proposal = request.data.get('update_proposal')
-            
-            proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
+
+            proposal_object = ContractProposal.objects.get(id=proposal_id, user=request.user)
             proposal_object.proposal = proposal
             proposal_object.save()
-
-            return Response({'messages': "Proposal updated successfully"}, status=status.HTTP_200_OK)
+            print(proposal_object.proposal, "-------------------")
+            return Response({"update_proposal": proposal_object.proposal, 'messages': "Proposal updated successfully"}, status=status.HTTP_200_OK)
         
         except ContractProposal.DoesNotExist:
             return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
@@ -383,6 +382,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from reportlab.pdfbase.pdfmetrics import stringWidth
+from django.core.mail import EmailMessage
 
 def generate_and_save_pdf(text, proposal_id, filename=None):
     pdf_buffer = BytesIO()
@@ -517,15 +517,15 @@ def proposal_pdf(request, proposal_id):
 
 
 
-        
 # @api_view(['POST'])
 # @permission_classes([])  
-# def send_pdf_email(request):
+# def send_pdf_email_link(request):
 #     if request.method == "POST":
 #         proposal_id = request.data.get('proposal_id')
- 
-#         if not proposal_id or not email:
-#             return Response({'error': 'Proposal ID and email are required.'}, status=400)
+#         recipient_email = request.data.get('email')
+
+#         if not proposal_id or not recipient_email:
+#             return Response({'error': 'Proposal ID and recipient email are required.'}, status=400)
         
 #         try:
 #             contract_proposal = ContractProposal.objects.get(id=proposal_id)
@@ -536,27 +536,23 @@ def proposal_pdf(request, proposal_id):
 #         if not proposal_text:
 #             return Response({'error': 'Proposal text is empty.'}, status=400)
 
-#         pdf_path = generate_pdf(text=proposal_text)
+#         pdf_url = generate_and_save_pdf(text=proposal_text, proposal_id=proposal_id)
 
-#         subject = f"Response to Solicitation {contract_proposal.solicitation_number} – {contract_proposal.title}"
-#         message = 'Please find the contract proposal PDF attached.'
-#         email = contract_proposal.submit_email
-
-#         email_from = settings.EMAIL_HOST_USER 
+#         subject = f"Proposal: {contract_proposal.title}"
+#         message = f"Please find the proposal attached. You can download the PDF from the following link:\n\n{settings.BASE_URL + pdf_url}"
+#         email_from = settings.EMAIL_HOST_USER
 
 #         try:
 #             email_message = EmailMessage(
 #                 subject=subject,
 #                 body=message,
 #                 from_email=email_from,
-#                 to=[email],  
+#                 to=[recipient_email],
 #             )
-#             email_message.attach_file(pdf_path)
 #             email_message.send()
 
-#             return Response({'message': 'Email sent successfully with the PDF attachment.'}, status=200)
+#             return Response({'message': 'Email sent successfully with the PDF link.'}, status=200)
         
 #         except Exception as e:
 #             return Response({'error': f'Error sending email: {str(e)}'}, status=500)
-        
 

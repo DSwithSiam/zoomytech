@@ -63,9 +63,8 @@ def manage_subscription(request):
             user = request.user
             subscription = Subscription.objects.filter(user=user).last()
             if subscription:
-                if subscription.status == True:
-                    subscription.delete()
-            return Response({"message": "Subscription cancle successfully"}, status=status.HTTP_200_OK)
+                subscription.delete()
+            return Response({"message": "Subscription canceled successfully"}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
