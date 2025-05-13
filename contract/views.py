@@ -199,60 +199,76 @@ def requirements_analysis(request):
         #     return Response(status=status.HTTP_400_BAD_REQUEST)
         
 
-
 @api_view(["POST"])
 def generate_proposal(request):
     if request.method == "POST":
         try:
             notice_id = request.data.get('notice_id')
             budget = request.data.get('amount')
-            description = contact_details["description"]
 
-            contact_details = ContractDetails.objects.get(notice_id = notice_id)
+            if not notice_id:
+                return Response({'error': 'Notice ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            contact_details = json.loads(contact_details.contract)
-            
+            contact_details_obj = ContractDetails.objects.get(notice_id=notice_id)
+            description = contact_details_obj.description
+            contract_data = contact_details_obj.contract
 
-            # proposal = generate_cover_letter_and_proposal(description, contact_details)  #ai function
+            company_obj = getattr(request.user, 'company_details', None)
 
-            company_details = CompanyDetails.objects.get(user = request.user)
-            company_details = {
-                "name": company_details.name,
-                "email": company_details.email,
-                "phone": company_details.phone,
-                "website": company_details.website,
-                "street": company_details.street,
-                "city": company_details.city,
-                "zipcode": company_details.zipcode,
-                "state": company_details.state,
-            }
-            proposal = generate_cover_letter_and_proposal(description, contact_details, company_details, budget)
+            if not company_obj:
+                company_details = {
+                    "name": request.user.full_name,
+                    "email": request.user.email,
+                    "phone": None,
+                    "website": None,
+                    "street": None,
+                    "city": None,
+                    "zipcode": None,
+                    "state": None,
+                }
+            else:
+                company_details = {
+                    "name": company_obj.name,
+                    "email": company_obj.email,
+                    "phone": company_obj.phone,
+                    "website": company_obj.website,
+                    "street": company_obj.street,
+                    "city": company_obj.city,
+                    "zipcode": company_obj.zipcode,
+                    "state": company_obj.state,
+                }
 
-            primary_contact = contact_details.get("pointOfContact", [{}])[0] 
+            proposal = generate_cover_letter_and_proposal(description, contract_data, company_details, budget)
+
+            primary_contact = contract_data.get("pointOfContact", [{}])[0]
+
             proposal_object = ContractProposal.objects.create(
-                user = request.user,
-                notice_id = notice_id,
-                solicitation_number =  contact_details.get("solicitationNumber", None),
-                title = contact_details.get("title", None),
-                opportunity_type =  contact_details.get("type", None),
-                inactive_date = contact_details.get("archiveDate", None),
-                submit_email = primary_contact.get("email", None),
-                submit_full_name = primary_contact.get("fullName", None),
-                draft = False,
-                proposal = proposal,
+                user=request.user,
+                notice_id=notice_id,
+                solicitation_number=contract_data.get("solicitationNumber"),
+                title=contract_data.get("title"),
+                opportunity_type=contract_data.get("type"),
+                inactive_date=contract_data.get("archiveDate"),
+                submit_email=primary_contact.get("email"),
+                submit_full_name=primary_contact.get("fullName"),
+                draft=False,
+                proposal=proposal,
             )
-            proposal_object.save()
-            return Response({'proposal_id': proposal_object.id, 'proposal': proposal, 'notice_id': notice_id}, status=status.HTTP_200_OK)
-        
+
+            return Response({
+                'proposal_id': proposal_object.id,
+                'proposal': proposal,
+                'notice_id': notice_id
+            }, status=status.HTTP_200_OK)
+
         except ContractDetails.DoesNotExist:
             return Response({'message': 'Contract details not found.'}, status=status.HTTP_404_NOT_FOUND)
-        except CompanyDetails.DoesNotExist:
-            return Response({'message': 'Company details not found.'}, status=status.HTTP_404_NOT_FOUND)
+
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
-
-
+        
 
 @api_view(["POST"])
 def save_draft_proposal(request):
@@ -307,10 +323,11 @@ def draf_proposal_list(request):
 
 
 
-@api_view(["PUT", 'GET'])
-def get_and_update_proposal_by_id(request, proposal_id):
+@api_view(['GET'])
+def get_proposal_by_id(request):
     if request.method == "GET":
         try:
+            proposal_id = request.query_params.get('proposal_id')
             proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)
             proposal_object.save()
 
@@ -320,9 +337,15 @@ def get_and_update_proposal_by_id(request, proposal_id):
             return Response({'messages': 'Proposal does not exist'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
+
+
+@api_view(['PUT'])
+@permission_classes([])
+def update_proposal_by_id(request):
     if request.method == "PUT":
         try:
+            proposal_id = request.data.get('proposal_id')
             proposal = request.data.get('update_proposal')
             
             proposal_object = ContractProposal.objects.get(id = proposal_id, user = request.user)

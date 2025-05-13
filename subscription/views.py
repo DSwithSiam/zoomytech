@@ -5,18 +5,22 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.response import Response
 from rest_framework import status
 import stripe
+
+# Set your Stripe API key
+stripe.api_key = settings.STRIPE_SECRET_KEY
 from .models import *
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
 def subscription_plan_list(request):
     if request.method == "GET":
         try:
             subscription_plans = SubscriptionPlan.objects.all()
             plans_data = [
             {
+                "id": plan.id,
                 "name": plan.name,
                 "description": plan.description,
                 "price": plan.price,
@@ -31,6 +35,7 @@ def subscription_plan_list(request):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 
+
 @api_view(['GET','POST'])
 @permission_classes([IsAuthenticated])
 def manage_subscription(request):
@@ -40,12 +45,12 @@ def manage_subscription(request):
             subscription = Subscription.objects.filter(user=user).last()
             if subscription:
                 subscription_data = {
-                    "name": subscription.user.full_name,
+                    "name": subscription.user.username,
                     "email": subscription.user.email,
                     "subscription_plan_name": subscription.plan.name,
                     "status": "active",
                     "purchase_date": subscription.start_date,
-                    "expiry_date": subscription.start_date,
+                    "expiry_date": subscription.end_date,
                 }
                 return Response(subscription_data, status=status.HTTP_200_OK)
             else:
@@ -69,16 +74,11 @@ def manage_subscription(request):
 @permission_classes([IsAuthenticated])
 def checkout_session(request):
     if request.method ==  "POST":
-        if not request.user.is_authenticated:
-            return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+        plan_id = request.data.get('plan_id')
+       
 
-        try:
-            plan_id = request.data.get('plan_id')
-        except Exception as e:
-            return Response({"error": "Plan ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        plan = get_object_or_404(SubscriptionPlan, name=plan_id)
-
+        plan = SubscriptionPlan.objects.get(id=plan_id)
+        print(f"Plan ID: {plan_id}")
         try:
             price = stripe.Price.create(
                 unit_amount=int(plan.price * 100),  # Convert price to cents

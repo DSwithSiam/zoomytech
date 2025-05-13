@@ -304,11 +304,9 @@ def update_company_details(request):
 def get_company_details(request):
     if request.method == 'GET':
         try:
-            company_instance = CompanyDetails.objects.get(user=request.user)
+            company_instance, created = CompanyDetails.objects.get_or_create(user=request.user)
             serializer = CompanyDetailsSerializers(company_instance)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except CompanyDetails.DoesNotExist:
-            return Response({'detail': 'Company details not found.'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

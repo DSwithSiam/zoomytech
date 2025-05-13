@@ -47,4 +47,5 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class CompanyDetailsSerializers(serializers.ModelSerializer):
     class Meta:
         model = CompanyDetails
-        fields = '__all__'
+        fields = "__all__"
+        read_only_fields = ["id", 'user']

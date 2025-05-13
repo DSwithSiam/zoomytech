@@ -15,21 +15,14 @@ def generate_cover_letter_and_proposal(description, notice_details, company_deta
     {description}
 
     **Solicitation Information:**
-    - Title: {notice_details['title']}
-    - Number: {notice_details['solicitationNumber']}
-    - Posted: {notice_details['postedDate']}
-    - Due: {notice_details['responseDeadLine']}
-    - Set-Aside: {notice_details['typeOfSetAsideDescription']}
-    - NAICS: {notice_details['naicsCode']}
-    - Contact: {notice_details['pointOfContact'][0]['fullName']}
-    - Email: {notice_details['pointOfContact'][0]['email']}
+    {notice_details}
 
     **Company Details (Only the following info is required):**
-    - Name: {company_details['companyName']}
-    - Address: {company_details['streetAddress']}, {company_details['city']}, {company_details['stateProvRegion']} {company_details['postalZipcode']}
-    - Email: {company_details['companyEmail']}
-    - Phone: {company_details['companyPhone']}
-    - Website: {company_details['companyWebsite']}
+    - Name: {company_details['name']}
+    - Address: {company_details['street']}, {company_details['city']}, {company_details['state']}, {company_details['zipcode']}
+    - Email: {company_details['email']}
+    - Phone: {company_details['phone']}
+    - Website: {company_details['website']}
 
     **Requirements:**
     - Cover Letter (1 page):
