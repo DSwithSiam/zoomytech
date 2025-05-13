@@ -131,12 +131,14 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5175",
+    "http://68.183.62.225",
 ]
 
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
+import os
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
  
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
