@@ -13,4 +13,5 @@ urlpatterns = [
    path('reset-request-activate/', reset_request_activate, name='reset_request_activate'),
    path('reset-password/', reset_password, name='reset_password'),
    path('delete-user/', delete_user, name='delete_user'),
+   path('update-company-details/', update_company_details, name='update_company_details'),
 ]

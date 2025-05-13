@@ -14,8 +14,19 @@ from rest_framework.permissions import IsAuthenticated
 def subscription_plan_list(request):
     if request.method == "GET":
         try:
-            subscription_plan = SubscriptionPlan.objects.all()
-            return Response({"subscription_plan": subscription_plan}, status=status.HTTP_200_OK)
+            subscription_plans = SubscriptionPlan.objects.all()
+            plans_data = [
+            {
+                "name": plan.name,
+                "description": plan.description,
+                "price": plan.price,
+                "features": plan.features.split(",") if plan.features else [],
+                "popular": plan.popular,
+                "billing_cycle": "monthly" if int(plan.billing_cycle) <= 31 else "yearly",
+            }
+            for plan in subscription_plans
+            ]
+            return Response(plans_data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -36,7 +47,7 @@ def manage_subscription(request):
                     "purchase_date": subscription.start_date,
                     "expiry_date": subscription.start_date,
                 }
-                return Response({"subscription": subscription_data}, status=status.HTTP_200_OK)
+                return Response(subscription_data, status=status.HTTP_200_OK)
             else:
                 return Response({"message": "No subscription found"}, status=status.HTTP_200_OK)
         except Exception as e:

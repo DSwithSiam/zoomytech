@@ -1,130 +1,88 @@
-import google.generativeai as genai
+from openai import OpenAI
 from datetime import datetime
 
-api_key = "AIzaSyB01ouUyKFz7IGzCgEnBdHnEY9QRQXPfIQ"  
-genai.configure(api_key=api_key)
-    
-# {
-#         "noticeId": "fcfd50c27639416bb40825e8a410da8c",
-#         "title": "30--WEIGHT,COUNTERBALAN",
-#         "solicitationNumber": "SPE7M125T8227",
-#         "fullParentPathName": "DEPT OF DEFENSE.DEFENSE LOGISTICS AGENCY.DLA MARITIME.DLA MARITIME COLUMBUS.DLA LAND AND MARITIME",
-#         "fullParentPathCode": "097.97AS.DLA MARITIME.DLA MARITIME COLUMBS.SPE7M1",
-#         "postedDate": "2025-03-16",
-#         "type": "Combined Synopsis/Solicitation",
-#         "baseType": "Combined Synopsis/Solicitation",
-#         "archiveType": "autocustom",
-#         "archiveDate": "2025-04-26",
-#         "typeOfSetAsideDescription": "Total Small Business Set-Aside (FAR 19.5)",
-#         "typeOfSetAside": "SBA",
-#         "responseDeadLine": "2025-03-27",
-#         "naicsCode": "333613",
-#         "naicsCodes": [
-#             "333613"
-#         ],
-#         "classificationCode": "30",
-#         "active": "Yes",
-#         "award": null,
-#         "pointOfContact": [
-#             {
-#                 "fax": null,
-#                 "type": "primary",
-#                 "email": "DibbsBSM@dla.mil",
-#                 "phone": null,
-#                 "title": null,
-#                 "fullName": "Questions regarding this solicitation should be emailed to the buyer listed in block 5 of the solicitation document which can be found under the Additional Information link.\nIf the Additional Information link does not work, please go to https://www.dibbs.bsm.dla.mil/Solicitations/ and type the solicitation number in the Global Search box.\n"
-#             }
-#         ],
-#         "description": "https://api.sam.gov/prod/opportunities/v1/noticedesc?noticeid=fcfd50c27639416bb40825e8a410da8c",
-#         "organizationType": "OFFICE",
-#         "officeAddress": {
-#             "zipcode": "43218-3990",
-#             "city": "COLUMBUS",
-#             "countryCode": "USA",
-#             "state": "OH"
-#         },
-#         "placeOfPerformance": null,
-#         "additionalInfoLink": null,
-#         "uiLink": "https://sam.gov/opp/fcfd50c27639416bb40825e8a410da8c/view",
-#         "links": [
-#             {
-#                 "rel": "self",
-#                 "href": "https://api.sam.gov/prod/opportunities/v2/search?noticeid=fcfd50c27639416bb40825e8a410da8c&limit=1"
-#             }
-#         ],
-#         "resourceLinks": null
-#     }
+DEEPSEEK_API_KEY = "sk-861a0b079e1149b4bbf3dfb3d63fbfc8"
+client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
-# description_ = """
-# The Federal Bureau of Prisons, CTS Contracting Office, Washington, D.C. is seeking quotes from sources
-# that have the ability to provide community-based outpatient substance use disorder, mental health, and sex offender
-# treatment services for male and female Adults in Custody (AICs) residing at the local Residential Reentry Center (RRC),
-# and/or on home confinement, or on Federal Location Monitoring (FLM), or, if applicable, reporting to a Day Reporting Center,
-# in the Memphis, TN area. All treatment services will be required to be performed within a 10-mile radius of Memphis City Hall
-# located at 125 N Main Street, Memphis, TN 38103, within a 1/2-mile access to community-based transportation, and within the state of Tennessee.
-# Performance periods under this contract will be for a one-year base period estimated to begin on October 01, 2024, with four (4) one-year option periods,
-# with services ending (if all options years are renewed) on September 30, 2029. These services required for this contract include a Base Year;
-# Option Year One, Option Year Two, Option Year Three, and Option Year Four.
-# """
+def generate_cover_letter_and_proposal(description, notice_details, company_details, budget):
 
-
-todays_date = datetime.now().strftime("%B %d, %Y")  
-
-def generate_cover_letter_and_proposal(description, notice_details):
     prompt = f"""
-    Based on the description below, write a formal cover letter and contract proposal.
+    Generate a professional government contract submission containing:
+    1. Formal Cover Letter
+    2. Detailed Service Proposal
 
-    Description:
+    **Contract Opportunity Details:**
     {description}
 
-    Contract Notice Details:
-    - Notice ID: {notice_details['noticeId']}
+    **Solicitation Information:**
     - Title: {notice_details['title']}
-    - Solicitation Number: {notice_details['solicitationNumber']}
-    - Posted Date: {notice_details['postedDate']}
-    - Type: {notice_details['type']}
+    - Number: {notice_details['solicitationNumber']}
+    - Posted: {notice_details['postedDate']}
+    - Due: {notice_details['responseDeadLine']}
     - Set-Aside: {notice_details['typeOfSetAsideDescription']}
-    - NAICS Code: {notice_details['naicsCode']}
-    - Classification Code: {notice_details['classificationCode']}
-    - Response Deadline: {notice_details['responseDeadLine']}
-
-    
-    Point Of Contact:
-    - Fax: {notice_details['pointOfContact'][0]['fax']}
-    - Type: {notice_details['pointOfContact'][0]['type']}
+    - NAICS: {notice_details['naicsCode']}
+    - Contact: {notice_details['pointOfContact'][0]['fullName']}
     - Email: {notice_details['pointOfContact'][0]['email']}
-    - phone: {notice_details['pointOfContact'][0]['phone']}
-    - Title: {notice_details['pointOfContact'][0]['title']}
-    - Full Name: {notice_details['pointOfContact'][0]['fullName']}
-    
 
-    office Address:
-    - Office Zipcode: {notice_details['officeAddress']['zipcode']}
-    - Office City: {notice_details['officeAddress']['city']}
-    - Office Country Code: {notice_details['officeAddress']['countryCode']}
-    - Office State: {notice_details['officeAddress']['state']}
-    
+    **Company Details (Only the following info is required):**
+    - Name: {company_details['companyName']}
+    - Address: {company_details['streetAddress']}, {company_details['city']}, {company_details['stateProvRegion']} {company_details['postalZipcode']}
+    - Email: {company_details['companyEmail']}
+    - Phone: {company_details['companyPhone']}
+    - Website: {company_details['companyWebsite']}
 
-    The cover letter should include a professional introduction, statement of interest, and relevant qualifications.
-    The contract proposal should clearly outline the scope of services, terms, pricing, and duration of the contract.
+    **Requirements:**
+    - Cover Letter (1 page):
+      * Company introduction
+      * Statement of qualifications
+      * Expression of interest
+      * Contact information
 
-    Note: The output should be formatted in Markdown so that it can be properly displayed in the frontend. Don't make any table in the output.
+    - Technical Proposal (2-3 pages):
+      * Understanding of requirements
+      * Technical approach/methodology
+      * Relevant experience
+      * Staffing plan
+      * Quality control measures
+
+    - Business Proposal (1-2 pages):
+      * Pricing structure: Estimated project cost is ${budget}. Detailed budget breakdown available upon request.
+      * Payment terms with real amount in USD
+      * Timeline
+      * Terms and conditions
+
+    **Formatting:**
+    - No tables (use bullet points instead)
+    - Professional business tone
+    - Clear section headings
+
+    **Important Instructions:**
+    - Use only the company details as provided in the `company_details` object above. **Do not include any placeholders like `[Your Name]` or `[Your Title]`**, as those are not required for this submission.
+    - Ensure that all information is presented clearly and professionally.
+    - Only include the details mentioned in the `company_details` field and omit all other extra information that is not part of the data provided.
+    - Don't write headings like 'End of Proposal'.
     """
-    
-    response = genai.GenerativeModel("gemini-1.5-flash").generate_content([prompt])
-    return response.text  
+
+    response = client.chat.completions.create(
+        model="deepseek-chat",
+        messages=[
+            {"role": "system", "content": "You are a government contracts specialist helping to prepare a competitive proposal submission."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7,
+        max_tokens=5000,
+        stream=False
+    )
+
+    return response.choices[0].message.content
 
 
 
-# cover_letter_and_proposal = generate_cover_letter_and_proposal(description_, notice_details_)
-# print(cover_letter_and_proposal)
 
 
 
 
-genai.configure(api_key=api_key)
-
-def generate_recommendations_for_cover_letter_and_contract(project_description: str):
+def generate_recommendations_for_cover_letter_and_contract(project_description: str) -> str:
     prompt = f"""
     Given the following project description, provide a **requirement analysis** and **concise recommendations** for the key elements to include in a cover letter and contract proposal.
 
@@ -148,21 +106,17 @@ def generate_recommendations_for_cover_letter_and_contract(project_description: 
     5. Compliance requirements (legal, regulatory, accessibility).
     6. Key evaluation criteria to consider for the provider selection.
     """
-    
-    response = genai.GenerativeModel("gemini-1.5-flash").generate_content([prompt])
-    return response.text.strip()
 
-description = """
-The Federal Bureau of Prisons, CTS Contracting Office, Washington, D.C. is seeking quotes from sources
-that have the ability to provide community-based outpatient substance use disorder, mental health, and sex offender
-treatment services for male and female Adults in Custody (AICs) residing at the local Residential Reentry Center (RRC),
-and/or on home confinement, or on Federal Location Monitoring (FLM), or, if applicable, reporting to a Day Reporting Center,
-in the Memphis, TN area. All treatment services will be required to be performed within a 10-mile radius of Memphis City Hall
-located at 125 N Main Street, Memphis, TN 38103, within a 1/2-mile access to community-based transportation, and within the state of Tennessee.
-Performance periods under this contract will be for a one-year base period estimated to begin on October 01, 2024, with four (4) one-year option periods,
-with services ending (if all options years are renewed) on September 30, 2029. These services required for this contract include a Base Year;
-Option Year One, Option Year Two, Option Year Three, and Option Year Four.
-"""
+    response = client.chat.completions.create(
+        model="deepseek-reasoner",
+        messages=[
+            {"role": "system", "content": "You are an expert in government contracting and procurement documentation."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7,
+        max_tokens=1500,
+        stream=False
+    )
 
-# recommendations = generate_recommendations_for_cover_letter_and_contract(description)
-# print(recommendations)
+    return response.choices[0].message.content.strip()
+

@@ -1,5 +1,6 @@
 import datetime
 from datetime import datetime, timedelta
+import json
 import os
 from django.http import HttpResponse
 from django.conf import settings
@@ -9,7 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from accounts.models import CompanyDetails
 from .models import *
 from .serializers import *
-from .ai import generate_cover_letter_and_proposal, generate_recommendations_for_cover_letter_and_contract
+from .ai import *
 import requests
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -132,12 +133,11 @@ def recent_contracts_list(request):
 
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([])
-def contracts_details(request):
-    if request.method == "POST":
-        NOTICE_ID = request.data.get("notice_id")
-
+def contracts_details(request, notice_id):
+    if request.method == "GET":
+        NOTICE_ID = notice_id
         contract = get_contracts_details(NOTICE_ID)
         description = get_contracts_description(NOTICE_ID)
 
@@ -185,6 +185,7 @@ def requirements_analysis(request):
         contact_details = contact_details.contract
         description = contact_details["description"]
         
+        # requirements = generate_recommendations_for_cover_letter_and_contract(description)
         requirements = generate_recommendations_for_cover_letter_and_contract(description)
 
         RequirementsAnalysis.objects.create(
@@ -193,7 +194,7 @@ def requirements_analysis(request):
             requirements = requirements
             )
 
-        return Response({'requirements': requirements}, status=status.HTTP_200_OK)
+        return Response(requirements, status=status.HTTP_200_OK)
         # except:
         #     return Response(status=status.HTTP_400_BAD_REQUEST)
         
@@ -204,12 +205,28 @@ def generate_proposal(request):
     if request.method == "POST":
         try:
             notice_id = request.data.get('notice_id')
-
-            contact_details = ContractDetails.objects.get(notice_id = notice_id)
-            contact_details = contact_details.contract
+            budget = request.data.get('amount')
             description = contact_details["description"]
 
-            proposal = generate_cover_letter_and_proposal(description, contact_details)  #ai function
+            contact_details = ContractDetails.objects.get(notice_id = notice_id)
+
+            contact_details = json.loads(contact_details.contract)
+            
+
+            # proposal = generate_cover_letter_and_proposal(description, contact_details)  #ai function
+
+            company_details = CompanyDetails.objects.get(user = request.user)
+            company_details = {
+                "name": company_details.name,
+                "email": company_details.email,
+                "phone": company_details.phone,
+                "website": company_details.website,
+                "street": company_details.street,
+                "city": company_details.city,
+                "zipcode": company_details.zipcode,
+                "state": company_details.state,
+            }
+            proposal = generate_cover_letter_and_proposal(description, contact_details, company_details, budget)
 
             primary_contact = contact_details.get("pointOfContact", [{}])[0] 
             proposal_object = ContractProposal.objects.create(
