@@ -84,10 +84,10 @@ def resend_otp(request):
         # email.send()
 
         send_email(
-                user_email = user.email, 
-                email_subject = email_subject, 
-                email_body = email_body
-                )
+            user_email = user.email, 
+            email_subject = email_subject, 
+            email_body = email_body
+            )
 
         
 

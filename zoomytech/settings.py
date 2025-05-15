@@ -140,12 +140,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 import os
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
  
+
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = "masipulislam@gmail.com"
-EMAIL_HOST_PASSWORD = "bngr vbkc vdoe mzwc" 
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = '890136001@smtp-brevo.com'  # NOT noreply@e-clinic.ai
+EMAIL_HOST_PASSWORD = '7wgsnzQSjUZmxcCY'
+DEFAULT_FROM_EMAIL = 'info@birdboxtools.com'
+
 
 
 # BASE_URL = 'http://yourdomain.com/media'
