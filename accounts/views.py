@@ -345,10 +345,6 @@ def get_company_details(request):
         try:
             company_instance, created = CompanyDetails.objects.get_or_create(user=request.user)
             serializer = CompanyDetailsSerializers(company_instance)
-            if serializer.is_valid():
-                image_url = request.build_absolute_uri(serializer.data['logo']) if serializer.data['logo'] else None
-                serializer.data['logo'] = image_url
-                serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
