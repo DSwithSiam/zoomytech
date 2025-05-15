@@ -49,3 +49,12 @@ class CompanyDetailsSerializers(serializers.ModelSerializer):
         model = CompanyDetails
         fields = "__all__"
         read_only_fields = ["id", 'user']
+
+
+class CustomUserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['full_name', 'image']
+        extra_kwargs = {
+            'image': {'required': False}
+        }

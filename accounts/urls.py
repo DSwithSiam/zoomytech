@@ -16,4 +16,7 @@ urlpatterns = [
    path('update-company-details/', update_company_details, name='update_company_details'),
    path('get_company_details/', get_company_details, name='get_company_details'),
 
+   path('update-profile/', update_profile, name='update_profile'),
+   path('change-password/', change_password, name='change_password'),
+
 ]

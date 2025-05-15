@@ -11,7 +11,9 @@ from rest_framework import status
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import CompanyDetailsSerializers, CustomUserSerializer
+
+from accounts.email import send_email
+from .serializers import CompanyDetailsSerializers, CustomUserSerializer, CustomUserUpdateSerializer
 from .models import *
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
@@ -43,9 +45,15 @@ def signup(request):
             email_subject = "Confirm Your Email"
             email_body = render_to_string('confirm_email.html', {'OTP' : otp_string})
 
-            email = EmailMultiAlternatives(email_subject , '', to=[user.email])
-            email.attach_alternative(email_body, "text/html")
-            email.send()
+            # email = EmailMultiAlternatives(email_subject , '', to=[user.email])
+            # email.attach_alternative(email_body, "text/html")
+            # email.send()
+
+            send_email(
+                user_email = user.email, 
+                email_subject = email_subject, 
+                email_body = email_body
+                )
 
             
             user.otp = otp_string
@@ -70,9 +78,19 @@ def resend_otp(request):
 
         email_subject = "Confirm Your Email"
         email_body = render_to_string('confirm_email.html', {'OTP': otp_string})
-        email = EmailMultiAlternatives(email_subject, '', to=[user.email])
-        email.attach_alternative(email_body, "text/html")
-        email.send()
+        
+        # email = EmailMultiAlternatives(email_subject, '', to=[user.email])
+        # email.attach_alternative(email_body, "text/html")
+        # email.send()
+
+        send_email(
+                user_email = user.email, 
+                email_subject = email_subject, 
+                email_body = email_body
+                )
+
+        
+
 
         user.otp = otp_string
         user.save()
@@ -183,6 +201,19 @@ def profile(request):
 
 
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_profile(request):
+    user = request.user
+    if request.method == 'PUT':
+        serializer = CustomUserUpdateSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 @api_view(['POST'])
 @permission_classes([])
 def pass_reset_request(request):
@@ -195,9 +226,17 @@ def pass_reset_request(request):
 
             email_subject = "Confirm Your Email"
             email_body = render_to_string('confirm_email.html', {'OTP': otp_string})
-            email = EmailMultiAlternatives(email_subject, '', to=[user.email])
-            email.attach_alternative(email_body, "text/html")
-            email.send()
+           
+            # email = EmailMultiAlternatives(email_subject, '', to=[user.email])
+            # email.attach_alternative(email_body, "text/html")
+            # email.send()
+
+            send_email(
+                user_email = user.email, 
+                email_subject = email_subject, 
+                email_body = email_body
+                )
+
 
             user.otp = otp_string
             user.save()
@@ -306,7 +345,32 @@ def get_company_details(request):
         try:
             company_instance, created = CompanyDetails.objects.get_or_create(user=request.user)
             serializer = CompanyDetailsSerializers(company_instance)
+            if serializer.is_valid():
+                image_url = request.build_absolute_uri(serializer.data['logo']) if serializer.data['logo'] else None
+                serializer.data['logo'] = image_url
+                serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    user = request.user
+    old_password = request.data.get('old_password')
+    new_password = request.data.get('new_password')
+
+    if not old_password or not new_password:
+        return Response({'detail': 'Both old and new passwords are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not user.check_password(old_password):
+        return Response({'detail': 'Old password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if old_password == new_password:
+        return Response({'detail': 'New password cannot be the same as the old password'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+    return Response({'detail': 'Password changed successfully'}, status=status.HTTP_200_OK)
 

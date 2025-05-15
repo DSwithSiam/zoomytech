@@ -464,8 +464,9 @@ def generate_and_save_pdf(text, proposal_id, filename=None):
 
 
 
-@api_view(['GET'])
-def proposal_pdf(request, proposal_id):
+@api_view(['POST'])
+def proposal_pdf(request):
+    proposal_id = request.data.get('proposal_id')
     try:        
         if not proposal_id:
             return Response({'message': 'Proposal ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
