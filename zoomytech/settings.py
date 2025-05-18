@@ -132,6 +132,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5175",
     "http://68.183.62.225",
+    "https://super-chimera-b5fee1.netlify.app/", 
 ]
 
 
