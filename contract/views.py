@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from accounts.models import CompanyDetails
+from contract.utils import remove_extra_c
 from .models import *
 from .serializers import *
 from .ai import *
@@ -187,7 +188,8 @@ def requirements_analysis(request):
         
         # requirements = generate_recommendations_for_cover_letter_and_contract(description)
         requirements = generate_recommendations_for_cover_letter_and_contract(description)
-
+        
+        requirements = remove_extra_c(requirements)
         RequirementsAnalysis.objects.create(
             notice_id = notice_id,
             user = request.user, 
@@ -241,7 +243,7 @@ def generate_proposal(request):
             proposal = generate_cover_letter_and_proposal(description, contract_data, company_details, budget)
 
             primary_contact = contract_data.get("pointOfContact", [{}])[0]
-
+            proposal = remove_extra_c(proposal)
             proposal_object = ContractProposal.objects.create(
                 user=request.user,
                 notice_id=notice_id,
