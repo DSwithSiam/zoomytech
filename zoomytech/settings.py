@@ -132,7 +132,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5175",
     "http://68.183.62.225",
-    "https://super-chimera-b5fee1.netlify.app/", 
+    "https://super-chimera-b5fee1.netlify.app", 
 ]
 
 
@@ -186,6 +186,7 @@ SWAGGER_SETTINGS = {
 
 
 
-SAM_API_KEY = "9YcWOXkbXKd0cg6ExffTxiLEjgp3h1ZiHQIYdNej"
+# SAM_API_KEY = "9YcWOXkbXKd0cg6ExffTxiLEjgp3h1ZiHQIYdNej"
+SAM_API_KEY = "DemEKiqUaVbWknvzEZQhhcR1SyZktVAqsRkQCfok"
 STRIPE_PUBLIC_KEY = "pk_test_51OXdHWFvvW23GozqFvd4UOjV8dig6tr9xrS8OI1tQtHQLM1Bmp93SjKqcPFlfzjB1p5N7pqzsWkH0u9WjPQ6GgP700wCQY1NnR"
 STRIPE_SECRET_KEY  = "sk_test_51OXdHWFvvW23GozqQWzgshPAf66cX6EhWQ8MBpEoLaZiEBMZKNmgLR0zYUZfedZXwDEVJN3mcSFOG3OlPk2KGeiw00gm81YC9z"
