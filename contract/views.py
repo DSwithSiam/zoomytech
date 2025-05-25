@@ -85,13 +85,14 @@ def get_contracts_description(NOTICE_ID):
     }
 
     response = requests.get(BASE_URL, params=params)
-    print(response, "---------------RESPONSE-----------")
-    print(response.json(), "----------------------JSON----")
     if response.status_code == 200:
         data = response.json()
-        return data
+        if "description" in data:
+            return data
+        else:
+            return {"description": "Description Not Found"}
     else:
-        return "400"
+        return {"description": "Description Not Found"}
     
 
 
@@ -143,34 +144,34 @@ def contracts_details(request, notice_id):
         contract = get_contracts_details(NOTICE_ID)
         description = get_contracts_description(NOTICE_ID)
         print(description, "--------------------------")
-        # try:
-        #     contract_details = ContractDetails.objects.filter(notice_id=NOTICE_ID).exists()
-        #     if not contract_details:
-        #         details = ContractDetails.objects.create(
-        #             notice_id = NOTICE_ID,
-        #             contract = contract, 
-        #             description =  description['description']
-        #             )
-        #         details.save()
-        # except:
-        #     return Response( status=status.HTTP_400_BAD_REQUEST)
+        try:
+            contract_details = ContractDetails.objects.filter(notice_id=NOTICE_ID).exists()
+            if not contract_details:
+                details = ContractDetails.objects.create(
+                    notice_id = NOTICE_ID,
+                    contract = contract, 
+                    description =  description['description']
+                    )
+                details.save()
+        except:
+            return Response( status=status.HTTP_400_BAD_REQUEST)
         print(contract, "--------------------------")
-        # primary_contact = contract.get("pointOfContact", [{}])[0] 
-        # data =  {
-        #     "noticeId": contract.get("noticeId", 0),
-        #     "title": contract.get("title", 0),
-        #     "solicitationNumber": contract.get("solicitationNumber", 0),
-        #     "fullParentPathName": contract.get("fullParentPathName", 0),
-        #     "type": contract.get("type", 0),
-        #     "archiveDate": contract.get("archiveDate", 0),
-        #     "responseDeadLine": contract.get("responseDeadLine", 0),
-        #     "active": contract.get("active", 0),
-        #     "contact_email": primary_contact.get("email", None),
-        #     "contact_phone": primary_contact.get("phone", None),
-        #     "contact_fullName": primary_contact.get("fullName", None),
-        #     "description" : description["description"],
-        # }
-        return Response(contract, status=status.HTTP_200_OK)
+        primary_contact = contract.get("pointOfContact", [{}])[0] 
+        data =  {
+            "noticeId": contract.get("noticeId", 0),
+            "title": contract.get("title", 0),
+            "solicitationNumber": contract.get("solicitationNumber", 0),
+            "fullParentPathName": contract.get("fullParentPathName", 0),
+            "type": contract.get("type", 0),
+            "archiveDate": contract.get("archiveDate", 0),
+            "responseDeadLine": contract.get("responseDeadLine", 0),
+            "active": contract.get("active", 0),
+            "contact_email": primary_contact.get("email", None),
+            "contact_phone": primary_contact.get("phone", None),
+            "contact_fullName": primary_contact.get("fullName", None),
+            "description" : description["description"],
+        }
+        return Response(data, status=status.HTTP_200_OK)
       
         
 
