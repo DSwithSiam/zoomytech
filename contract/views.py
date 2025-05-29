@@ -522,15 +522,54 @@ def proposal_pdf(request):
 
 
 
+@api_view(['POST'])
+@permission_classes([])  
+def send_email(request):
+    if request.method == "POST":
+        proposal_id = request.data.get('proposal_id')
+
+        if not proposal_id:
+            return Response({'error': 'Proposal ID is required.'}, status=400)
+        
+        try:
+            contract_proposal = ContractProposal.objects.get(id=proposal_id)
+        except ContractProposal.DoesNotExist:
+            return Response({'error': 'Proposal not found.'}, status=404)
+
+        proposal_text = contract_proposal.proposal
+        if not proposal_text:
+            return Response({'error': 'Proposal text is empty.'}, status=400)
+
+        pdf_url = generate_and_save_pdf(text=proposal_text, proposal_id=proposal_id)
+
+        subject = f"Proposal: {contract_proposal.title}"
+        message = f"Please find the proposal attached. You can download the PDF from the following link: \n\n {settings.BASE_URL + pdf_url} "
+
+        try:
+            data = {
+                "subject": subject,
+                "body": message,
+                "pdf_url": settings.BASE_URL + pdf_url,
+            }
+
+            return Response(data, status=200)
+        
+        except Exception as e:
+            return Response({'error': f'Error sending email: {str(e)}'}, status=500)
+        
+
 # @api_view(['POST'])
 # @permission_classes([])  
-# def send_pdf_email_link(request):
+# def send_email_with_pdf_link(request):
 #     if request.method == "POST":
 #         proposal_id = request.data.get('proposal_id')
 #         recipient_email = request.data.get('email')
 
-#         if not proposal_id or not recipient_email:
-#             return Response({'error': 'Proposal ID and recipient email are required.'}, status=400)
+#         if not proposal_id:
+#             return Response({'error': 'Proposal ID is required.'}, status=400)
+        
+#         if not recipient_email:
+#             return Response({'error': 'Recipient email is required.'}, status=400)
         
 #         try:
 #             contract_proposal = ContractProposal.objects.get(id=proposal_id)
@@ -544,7 +583,7 @@ def proposal_pdf(request):
 #         pdf_url = generate_and_save_pdf(text=proposal_text, proposal_id=proposal_id)
 
 #         subject = f"Proposal: {contract_proposal.title}"
-#         message = f"Please find the proposal attached. You can download the PDF from the following link:\n\n{settings.BASE_URL + pdf_url}"
+#         message = f"Please find the proposal attached. You can download the PDF from the following link:\n\n<a href='{settings.BASE_URL + pdf_url}' target='_blank'>Download Proposal PDF</a>"
 #         email_from = settings.EMAIL_HOST_USER
 
 #         try:
@@ -554,10 +593,17 @@ def proposal_pdf(request):
 #                 from_email=email_from,
 #                 to=[recipient_email],
 #             )
+#             email_message.content_subtype = "html" 
 #             email_message.send()
 
-#             return Response({'message': 'Email sent successfully with the PDF link.'}, status=200)
+#             # Generate a frontend link for the user to navigate to the email page
+#             frontend_email_link = f"{"settings.FRONTEND_BASE_URL"}/email?proposal_id={proposal_id}&recipient_email={recipient_email}"
+
+#             return Response({
+#                 'message': 'Email sent successfully with the PDF link.',
+#                 'frontend_email_link': frontend_email_link,
+#                 'main_link': f"<a href='{frontend_email_link}' target='_blank'>Go to Email Page</a>"
+#             }, status=200)
         
 #         except Exception as e:
 #             return Response({'error': f'Error sending email: {str(e)}'}, status=500)
-

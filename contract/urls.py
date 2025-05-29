@@ -16,7 +16,6 @@ urlpatterns = [
     path('proposal/<int:proposal_id>/', get_proposal_by_id, name='proposal'),  # get and update proposal by id
     path('proposal/', update_proposal_by_id, name='update_proposal_by_id'),  # get and update proposal by id
     # path('download-pdf/', download_pdf, name='download-pdf'),
-    # path('send-pdf-email/', send_pdf_email_link, name='send_pdf_email_link'),
+    path('send-pdf-email/', send_email, name='send_email'),
     path('proposal_pdf/', proposal_pdf, name='proposal_pdf'),
 ]
-
