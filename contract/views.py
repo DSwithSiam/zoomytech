@@ -533,6 +533,8 @@ def send_email(request):
         
         try:
             contract_proposal = ContractProposal.objects.get(id=proposal_id)
+            contract_proposal.submit = True
+            contract_proposal.save()
         except ContractProposal.DoesNotExist:
             return Response({'error': 'Proposal not found.'}, status=404)
 
